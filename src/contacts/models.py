@@ -1,7 +1,7 @@
 from sqlalchemy import Date, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.database.db import Base
+from config.db import Base
 from src.auth.models import User
 
 class Contact(Base):
