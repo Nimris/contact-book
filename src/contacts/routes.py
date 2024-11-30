@@ -1,6 +1,7 @@
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi_limiter.depends import RateLimiter
 
 from config.cache import invalidate_get_contacts_repo_cache
 from src.auth.shema import RoleEnum
@@ -13,11 +14,15 @@ from src.contacts.repos import ContactRepository
 router = APIRouter()
 
 
-@router.get("/all", response_model=List[ContactResponse])
+@router.get("/all", 
+            response_model=List[ContactResponse], 
+            description='No more than 10 requests per minute',
+            dependencies=[Depends(RateLimiter(times=10, seconds=60)),],
+            )
 async def get_contacts(
     db: AsyncSession = Depends(get_db), 
     skip:int = 0, 
-    limit:int = 10, 
+    limit:int = 10,
     user = Depends(RoleChecker([RoleEnum.USER, RoleEnum.ADMIN]))
     ):
     contact_repo = ContactRepository(db)
@@ -25,7 +30,11 @@ async def get_contacts(
     return contacts
 
 
-@router.get("/", response_model=List[ContactResponse])
+@router.get("/", 
+            response_model=List[ContactResponse], 
+            description='No more than 10 requests per minute',
+            dependencies=[Depends(RateLimiter(times=10, seconds=60)),],
+            )
 async def get_contact(db: AsyncSession = Depends(get_db), user = Depends(RoleChecker([RoleEnum.USER, RoleEnum.ADMIN])), contact_id: Optional[int] = None, name: Optional[str] = None, surname: Optional[str] = None, email: Optional[str] = None):
     contact_repo = ContactRepository(db)
     contact = await contact_repo.get_contact(contact_id, name, surname, email)
@@ -35,7 +44,11 @@ async def get_contact(db: AsyncSession = Depends(get_db), user = Depends(RoleChe
     return contact
 
 
-@router.post("/", response_model=ContactResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=ContactResponse, 
+             status_code=status.HTTP_201_CREATED, 
+             description='No more than 10 requests per minute',
+             dependencies=[Depends(RateLimiter(times=10, seconds=60))]
+            )
 async def create_contact(contact: ContactCreate, user = Depends(RoleChecker([RoleEnum.USER, RoleEnum.ADMIN])), db: AsyncSession = Depends(get_db)):
     await invalidate_get_contacts_repo_cache(user.id)
     contact_repo = ContactRepository(db)
