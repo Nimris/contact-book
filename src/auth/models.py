@@ -22,3 +22,4 @@ class User(Base):
     role_id: Mapped[int] = mapped_column(Integer, ForeignKey("roles.id"), nullable=True, default=1)
     role: Mapped["Role"] = relationship("Role", lazy="selectin")
     is_active: Mapped[bool] = mapped_column(default=True, nullable=True)
+    avatar: Mapped[str] = mapped_column(String, nullable=True)

@@ -10,13 +10,20 @@ class UserRepository:
     def __init__(self, session):
         self.session = session
         
+    async def update_avatar(self, email, url) -> User:
+        user = await self.get_user_by_email(email)
+        user.avatar = url
+        self.session.add(user)
+        await self.session.commit()
+        await self.session.refresh(user)
+        return user
+        
+        
     async def delete_user(self, email: str):
-        # Найдем пользователя по email
         user = await self.get_user_by_email(email)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        # Удалим пользователя из базы данных
         await self.session.delete(user)
         await self.session.commit()
 

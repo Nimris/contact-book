@@ -39,13 +39,15 @@ async def on_startup():
 
 @app.on_event("shutdown")
 async def on_shutdown():
-    redis = FastAPICache.get_backend()._client
-    await redis.close()
+    # redis = FastAPICache.get_backend()._client
+    # await redis.close()
+    ...
     
+origins = ["*"]
     
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=origins, 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -1,20 +1,45 @@
-
-from fastapi import APIRouter, BackgroundTasks
+import cloudinary
+import cloudinary.uploader
+from fastapi import APIRouter, BackgroundTasks, UploadFile, File
 from fastapi.security import OAuth2PasswordRequestForm
 from jinja2 import Environment, FileSystemLoader
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends, HTTPException
 
-from src.auth.utils import create_access_token, create_refresh_token, create_verification_token, decode_access_token, decode_verification_token
+from src.auth.utils import create_access_token, create_refresh_token, create_verification_token, decode_access_token, decode_verification_token, get_current_user
 from src.auth.pass_utilits import verify_password
 from src.auth.shema import Token, UserCreate, UserResponse
 from src.auth.repos import UserRepository
 from config.db import get_db
 from src.auth.mail_utils import send_verification_email 
+from config.general import settings
 
 
 router = APIRouter()
 env = Environment(loader=FileSystemLoader('src/templates'))
+
+
+@router.get("/me/", response_model=UserResponse)
+async def user_me(current_user = Depends(get_current_user)):
+    return current_user
+
+
+@router.patch('/avatar', response_model=UserResponse)
+async def update_avatar(file: UploadFile = File(), 
+                             current_user = Depends(get_current_user),
+                             db = Depends(get_db)):
+    cloudinary.config(
+        cloud_name=settings.cloudinary_name,
+        api_key=settings.cloudinary_api_key,
+        api_secret=settings.cloudinary_api_secret,
+        secure=True
+    )
+    r = cloudinary.uploader.upload(file.file, public_id=f'ContactApp/{current_user.username}', overwrite=True)
+    src_url = cloudinary.CloudinaryImage(f'ContactApp/{current_user.username}')\
+                        .build_url(width=250, height=250, crop='fill', version=r.get('version'))
+    user_repo = UserRepository(db)
+    user = await user_repo.update_avatar(current_user.email, src_url)
+    return user
 
 
 @router.delete("/delete-user/{email}")
@@ -22,6 +47,7 @@ async def delete_user(email: str, db: AsyncSession = Depends(get_db)):
     user_repo = UserRepository(db)
     response = await user_repo.delete_user(email)
     return response
+
 
 @router.post("/register", response_model=UserResponse)
 async def register(user_create: UserCreate, background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db)):

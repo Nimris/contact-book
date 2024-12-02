@@ -6,9 +6,6 @@ services:
     depends_on:
       - db
       - redis
-    environment:
-      - POSTGRES_HOST=db
-      - REDIS_URL=redis://redis:6379
     env_file:
       - .env
     volumes:
@@ -22,13 +19,6 @@ services:
       - 5432:5432
     volumes:
       - postgres_data:/var/lib/postgresql/data
-  
-  email:
-    image: mailhog/mailhog
-    ports:
-      - 1025:1025
-      - 8025:8025
-
   redis:
     image: redis
     volumes:
