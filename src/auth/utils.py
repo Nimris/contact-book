@@ -20,12 +20,30 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 
 def create_verification_token(email:str):
+    """
+    Creates a verification token
+    
+    :param email: User email
+    :type email: str
+    :return: Verification token
+    :rtype: str
+    """
+    
     expire = datetime.now(timezone.utc) + timedelta(hours=VERIFICATION_TOKEN_EXPIRE_HOURS)
     to_encode = {"sub": email, "exp": expire}
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORYTHM)
     return encoded_jwt
 
 def decode_verification_token(token):
+    """
+    Decodes a verification token
+    
+    :param token: Verification token
+    :type token: str
+    :return: User email
+    :rtype: str
+    """
+    
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORYTHM])
         email = payload.get("sub")
@@ -37,6 +55,15 @@ def decode_verification_token(token):
 
 
 def create_access_token(data: dict):
+    """
+    Creates an access token
+    
+    :param data: Data to encode
+    :type data: dict
+    :return: Access token
+    :rtype: str
+    """
+    
     to_encode = data.copy()
     expire = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
@@ -44,6 +71,14 @@ def create_access_token(data: dict):
 
 
 def create_refresh_token(data: dict):
+    """
+    Creates a refresh token
+    
+    :param data: Data to encode
+    :type data: dict
+    :return: Refresh token
+    :rtype: str
+    """
     to_encode = data.copy()
     expire = datetime.now() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode.update({"exp": expire})
@@ -51,6 +86,15 @@ def create_refresh_token(data: dict):
 
 
 def decode_access_token(token):
+    """
+    Decodes an access token
+    
+    :param token: Access token
+    :type token: str
+    :return: Token data
+    :rtype: TokenData
+    """
+    
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORYTHM])
         username = payload.get("sub")
@@ -62,6 +106,17 @@ def decode_access_token(token):
         
         
 async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
+    """
+    Retrieves current user
+    
+    :param token: Access token
+    :type token: str
+    :param db: Database session
+    :type db: AsyncSession
+    :return: User object
+    :rtype: User
+    """
+    
     credentials_exception = HTTPException(status_code=401, detail="Could not validate credentials")
     token_data = decode_access_token(token)
     if token_data is None:
@@ -78,6 +133,17 @@ class RoleChecker:
         self.allowed_roles = allowed_roles
         
     async def __call__(self, token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
+        """
+        Checks if user has the required role
+        
+        :param token: Access token
+        :type token: str
+        :param db: Database session
+        :type db: AsyncSession
+        :return: User object
+        :rtype: User
+        """
+        
         user = await get_current_user(token, db)
         
         if RoleEnum(user.role.name) not in self.allowed_roles:

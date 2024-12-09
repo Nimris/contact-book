@@ -18,6 +18,15 @@ mail_config = ConnectionConfig(
 logger = logging.getLogger("email_logger")
 
 async def send_verification_email(email: str, email_body: str):
+    """
+    Sends email verification email
+    
+    :param email: Email address
+    :type email: str
+    :param email_body: Email text
+    :type email_body: str
+    
+    """
     logger.info(f"Отправка письма на {email}")
     message = MessageSchema(
         subject="Email Verification",

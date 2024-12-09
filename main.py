@@ -19,6 +19,12 @@ app.include_router(auth_router, prefix='/auth', tags=['auth'])
 
 @app.get("/ping")
 def pong():
+    """
+    Returns a pong message if the server is running
+    
+    :return: Pong message
+    :rtype: dict
+    """
     return {"message": "pong!"}
 
 
@@ -35,13 +41,7 @@ async def on_startup():
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
 
     await FastAPILimiter.init(redis)
-
-
-@app.on_event("shutdown")
-async def on_shutdown():
-    # redis = FastAPICache.get_backend()._client
-    # await redis.close()
-    ...
+    
     
 origins = ["*"]
     

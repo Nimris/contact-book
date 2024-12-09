@@ -18,29 +18,52 @@ class ContactRepository:
 
     # @cache(expire=60, namespace='get_contacts_repo', key_builder=custom_repo_key_builder)
     async def get_contacts(self, skip: int, limit: int, owner_id) -> List[Contact]:
+        """
+        Returns a list of all contacts for a given user with specified pagination
+        
+        :param skip: Number of contacts to skip
+        :type skip: int
+        :param limit: Number of contacts to return
+        :type limit: int
+        :param owner_id: User id
+        :type owner_id: int
+        :return: List of contacts
+        :rtype: List[Contact]
+        """
         result = await self.session.execute(select(Contact).where(Contact.owner_id == owner_id).offset(skip).limit(limit))
         if not result:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No contacts found")
         return result.scalars().all()
     
         
-    async def get_contact(self, contact_id: Optional[int] = None, name: Optional[str] = None, surname: Optional[str] = None, email: Optional[str] = None) -> List[Contact]:
+    async def get_contact(self, contact_id: int = None) -> Contact:
+        """
+        Returns a contact based on id
+        
+        :param contact_id: Contact id
+        :type contact_id: int
+        :return: Contact
+        :rtype: Contact
+        """
+        
         if contact_id:
             result = await self.session.execute(select(Contact).filter(Contact.id == contact_id))
-            return result.scalars().all()
-        if name:
-            result = await self.session.execute(select(Contact).filter(Contact.name == name))
-            return result.scalars().all()
-        if surname:
-            result = await self.session.execute(select(Contact).filter(Contact.surname == surname))
-            return result.scalars().all()
-        if email:
-            result = await self.session.execute(select(Contact).filter(Contact.email == email))
-            return result.scalars().all()
-        return []
+            return result.scalar_one_or_none()
+        return None
 
 
     async def create_contact(self, contact: ContactCreate, owner_id: int) -> Contact:
+        """
+        Creates a new contact for a given user
+        
+        :param contact: Contact data
+        :type contact: ContactCreate
+        :param owner_id: User id
+        :type owner_id: int
+        :return: New contact
+        :rtype: Contact
+        """
+        
         new_contact = Contact(
             name=contact.name, surname=contact.surname, email=contact.email,
             phone=contact.phone, birthday=contact.birthday, owner_id=owner_id
@@ -52,6 +75,19 @@ class ContactRepository:
 
 
     async def update_contact(self, contact: ContactUpdate, contact_id: int, owner_id: int) -> Optional[Contact]:
+        """
+        Updates an existing contact for a given user by provided id
+        
+        :param contact: Contact data
+        :type contact: ContactUpdate
+        :param contact_id: Contact id
+        :type contact_id: int
+        :param owner_id: User id
+        :type owner_id: int
+        :return: Updated contact
+        :rtype: Optional[Contact]
+        """
+        
         result = await self.session.execute(
             select(Contact).filter(Contact.id == contact_id, Contact.owner_id == owner_id)
         )
@@ -67,6 +103,15 @@ class ContactRepository:
     
     
     async def delete_contact(self, contact_id: int) -> Optional[Contact]:
+        """
+        Removes an existing contact by provided id
+        
+        :param contact_id: Contact id
+        :type contact_id: int
+        :return: Deleted contact
+        :rtype: Optional[Contact]
+        """
+        
         result = await self.session.execute(select(Contact).filter(Contact.id == contact_id))
         db_contact = result.scalar_one_or_none()
         if db_contact:
@@ -76,6 +121,13 @@ class ContactRepository:
 
 
     async def get_upcoming_birthdays(self) -> List[Contact]:
+        """
+        Returns a list of contacts that have a birthday in the next 7 days
+        
+        :return: List of contacts
+        :rtype: List[Contact]
+        """
+        
         today = date.today()
         end_date = today + timedelta(days=7)
 

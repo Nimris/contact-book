@@ -13,21 +13,45 @@ from src.auth.repos import UserRepository
 from config.db import get_db
 from src.auth.mail_utils import send_verification_email 
 from config.general import settings
+import os
 
 
 router = APIRouter()
-env = Environment(loader=FileSystemLoader('src/templates'))
+env = Environment(loader=FileSystemLoader('src\templates'))
 
 
 @router.get("/me/", response_model=UserResponse)
 async def user_me(current_user = Depends(get_current_user)):
+    """
+    Returns the current user
+    
+    :param current_user: Current user
+    :type current_user: User
+    :return: Current user
+    :rtype: User
+    """
     return current_user
 
 
 @router.patch('/avatar', response_model=UserResponse)
-async def update_avatar(file: UploadFile = File(), 
-                             current_user = Depends(get_current_user),
-                             db = Depends(get_db)):
+async def update_avatar(
+    file: UploadFile = File(), 
+    current_user = Depends(get_current_user),
+    db = Depends(get_db)
+    ):
+    """
+    Updates user avatar
+    
+    :param file: File object
+    :type file: UploadFile
+    :param current_user: Current user
+    :type current_user: User
+    :param db: Database session
+    :type db: AsyncSession
+    :return: Updated user object
+    :rtype: User
+    """
+    
     cloudinary.config(
         cloud_name=settings.cloudinary_name,
         api_key=settings.cloudinary_api_key,
@@ -44,6 +68,14 @@ async def update_avatar(file: UploadFile = File(),
 
 @router.delete("/delete-user/{email}")
 async def delete_user(email: str, db: AsyncSession = Depends(get_db)):
+    """
+    Deletes user by email
+    
+    :param email: User email
+    :type email: str
+    :param db: Database session
+    :type db: AsyncSession
+    """
     user_repo = UserRepository(db)
     response = await user_repo.delete_user(email)
     return response
@@ -51,6 +83,19 @@ async def delete_user(email: str, db: AsyncSession = Depends(get_db)):
 
 @router.post("/register", response_model=UserResponse)
 async def register(user_create: UserCreate, background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db)):
+    """
+    Allows user to sign up and sends a verification email
+    
+    :param user_create: User data
+    :type user_create: UserCreate
+    :param background_tasks: Background tasks
+    :type background_tasks: BackgroundTasks
+    :param db: Database session
+    :type db: AsyncSession
+    :return: New user
+    :rtype: User
+    """
+    
     user_repo = UserRepository(db)
     user = await user_repo.get_user_by_email(user_create.email)
     
@@ -69,6 +114,17 @@ async def register(user_create: UserCreate, background_tasks: BackgroundTasks, d
 
 @router.get("/verify-email")
 async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
+    """
+    Verifies user email
+    
+    :param token: Verification token
+    :type token: str
+    :param db: Database session
+    :type db: AsyncSession
+    :return: Message "User successfully activated"
+    :rtype: dict
+    """
+    
     email = decode_verification_token(token)
     user_repo = UserRepository(db)
     user = await user_repo.get_user_by_email(email)
@@ -80,6 +136,17 @@ async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
 
 @router.post("/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+    """
+    Allows user to log in and returns access and refresh tokens
+    
+    :param form_data: Form data
+    :type form_data: OAuth2PasswordRequestForm
+    :param db: Database session
+    :type db: AsyncSession
+    :return: Access and refresh tokens
+    :rtype: Token
+    """
+    
     user_repo = UserRepository(db)
     user = await user_repo.get_user_by_username(form_data.username)
     
@@ -95,6 +162,16 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 
 @router.post("/refresh", response_model=Token)
 async def refresh_tokens(refresh_token: str, db: AsyncSession = Depends(get_db)):
+    """
+    Allows user to refresh access and refresh tokens
+    
+    :param refresh_token: Refresh token
+    :type refresh_token: str
+    :param db: Database session
+    :type db: AsyncSession
+    :return: Access and refresh tokens
+    :rtype: Token
+    """
     token_data = decode_access_token(refresh_token)
     user_repo = UserRepository(db)
     user = await user_repo.get_user_by_username(token_data.username)

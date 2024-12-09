@@ -10,6 +10,8 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
+from src.auth.shema import RoleEnum
+from src.auth.models import Role
 
 # revision identifiers, used by Alembic.
 revision: str = '0087a8489b84'
@@ -25,7 +27,9 @@ def upgrade() -> None:
     op.add_column('users', sa.Column('avatar', sa.String(), nullable=True))
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
     op.create_index(op.f('ix_users_id'), 'users', ['id'], unique=False)
+    # op.bulk_insert(Role.__table__, [{'name': RoleEnum.USER.value}, {'name': RoleEnum.ADMIN.value}])
     # ### end Alembic commands ###
+    
 
 
 def downgrade() -> None:
