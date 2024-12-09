@@ -28,7 +28,7 @@ def client(mock_db, mock_role_checker):
 
 @pytest.mark.asyncio
 async def test_get_contact(client, mock_db):
-    contact = Contact(id=1, name="John Doe", email="ads@das.com")
+    contact = Contact(id=1, name="John", surname="Doe", email="ads@das.com")
     mock_repo = MagicMock()
     mock_repo.get_contact = MagicMock(return_value=contact)
     
