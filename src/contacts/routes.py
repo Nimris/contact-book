@@ -73,8 +73,8 @@ async def get_contact(db: AsyncSession = Depends(get_db), user = Depends(get_cur
 
 @router.post("/", response_model=ContactResponse, 
              status_code=status.HTTP_201_CREATED, 
-             description='No more than 10 requests per minute',
-             dependencies=[Depends(RateLimiter(times=10, seconds=60))]
+            #  description='No more than 10 requests per minute',
+            #  dependencies=[Depends(RateLimiter(times=10, seconds=60))]
             )
 async def create_contact(
     contact: ContactCreate, 

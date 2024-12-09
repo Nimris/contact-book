@@ -18,7 +18,7 @@ class UserCreate(UserBase):
     
 class UserResponse(UserBase):
     id: int
-    avatar: str
+    # avatar: str
     
     class Config:
         from_attributes = True

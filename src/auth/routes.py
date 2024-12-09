@@ -17,7 +17,7 @@ import os
 
 
 router = APIRouter()
-env = Environment(loader=FileSystemLoader("D:\Softwering\SE\HW13\contact-book\src\templates"))
+env = Environment(loader=FileSystemLoader("src/templates"))
 
 
 @router.get("/me/", response_model=UserResponse)
