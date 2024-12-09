@@ -95,13 +95,12 @@ async def auth_header(test_user: User):
 @pytest_asyncio.fixture(scope="function")
 async def test_user_contact(db_session, test_user: User, faker) -> Contact:
     contact = Contact(
-        first_name=faker.first_name(),
-        last_name=faker.last_name(),
+        name=faker.first_name(),
+        surname=faker.last_name(),
         email=faker.email(),
-        phone_number=faker.phone_number(),
+        phone=faker.phone_number(),
         owner_id=test_user.id,
         birthday=faker.date_of_birth(),
-        additional_info=faker.text()
     )
     db_session.add(contact)
     await db_session.commit()
